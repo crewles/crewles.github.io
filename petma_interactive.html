@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Petma App</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #F0EDE8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px;
+  }
+
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: #fff;
+    border-radius: 48px;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Status Bar */
+  .status-bar {
+    height: 52px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .dynamic-island {
+    width: 120px; height: 34px;
+    background: #000; border-radius: 20px;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .signal { display: flex; gap: 2px; align-items: flex-end; }
+  .signal span { background: #111; border-radius: 1px; width: 3px; }
+  .signal span:nth-child(1) { height: 5px; }
+  .signal span:nth-child(2) { height: 8px; }
+  .signal span:nth-child(3) { height: 11px; }
+  .battery {
+    width: 22px; height: 11px; border: 1.5px solid #111;
+    border-radius: 2px; position: relative; display: flex;
+    align-items: center; padding: 1.5px;
+  }
+  .battery::after {
+    content: ''; position: absolute; right: -4px; top: 50%;
+    transform: translateY(-50%); width: 2px; height: 5px;
+    background: #111; border-radius: 0 1px 1px 0;
+  }
+  .battery-fill { background: #111; border-radius: 1px; flex: 1; height: 100%; }
+
+  /* Top Nav */
+  .top-nav {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid #F0F0F0;
+    flex-shrink: 0;
+  }
+  .nav-title { font-size: 18px; font-weight: 700; color: #111; }
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #F5F5F5; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; transition: background 0.15s;
+    border: none; outline: none;
+  }
+  .icon-btn:hover { background: #EBEBEB; }
+  .icon-btn:active { background: #E0E0E0; transform: scale(0.95); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* Screens */
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* Scrollable content */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    height: 80px;
+    display: flex;
+    border-top: 1px solid #F0F0F0;
+    padding-bottom: 16px;
+    flex-shrink: 0;
+    background: #fff;
+    z-index: 10;
+  }
+  .nav-tab {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    cursor: pointer; transition: opacity 0.15s;
+    border: none; background: none; outline: none;
+  }
+  .nav-tab:active { opacity: 0.6; }
+  .nav-tab .tab-icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+  .nav-tab .tab-label { font-size: 10px; color: #CCC; font-weight: 500; }
+  .nav-tab.active .tab-label { color: #111; }
+
+  /* ── HOME ── */
+  .post { border-bottom: 1px solid #F5F5F5; padding-bottom: 8px; }
+  .post-header {
+    display: flex; align-items: center;
+    gap: 10px; padding: 14px 20px 8px;
+  }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #E8E8E8; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600; color: #888;
+  }
+  .post-user-name { font-size: 14px; font-weight: 600; color: #111; }
+  .post-time { font-size: 12px; color: #CCC; margin-top: 1px; }
+  .post-caption { font-size: 13px; color: #444; padding: 0 20px 10px; line-height: 1.5; }
+  .post-image {
+    width: 100%; height: 220px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pet-emoji { font-size: 72px; }
+  .post-actions {
+    display: flex; align-items: center;
+    gap: 20px; padding: 10px 20px 4px;
+  }
+  .action-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; cursor: pointer;
+    padding: 6px; border-radius: 8px; transition: background 0.15s;
+  }
+  .action-btn:hover { background: #F5F5F5; }
+  .action-btn:active { background: #EBEBEB; transform: scale(0.95); }
+  .action-count { font-size: 13px; color: #888; font-weight: 500; }
+  .fab {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #111; position: absolute;
+    bottom: 96px; right: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    cursor: pointer; border: none; transition: transform 0.15s, box-shadow 0.15s;
+    z-index: 5;
+  }
+  .fab:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
+  .fab:active { transform: scale(0.95); }
+
+  /* ── PROFILE ── */
+  .profile-cover {
+    height: 140px;
+    background: linear-gradient(135deg, #C9C2B8 0%, #A89E93 100%);
+    position: relative; flex-shrink: 0;
+  }
+  .profile-avatar-wrap {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: #D4CFC9; border: 4px solid #FFF;
+    position: absolute; bottom: -40px; left: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+  .profile-edit {
+    position: absolute; bottom: 12px; right: 20px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none; transition: background 0.15s;
+  }
+  .profile-edit:hover { background: #fff; }
+  .profile-info { padding: 50px 20px 14px; }
+  .profile-name { font-size: 20px; font-weight: 700; color: #111; }
+  .profile-loc { font-size: 13px; color: #AAA; margin-top: 2px; }
+  .profile-stats { display: flex; gap: 28px; margin-top: 12px; }
+  .stat-item { text-align: left; }
+  .stat-num { font-size: 17px; font-weight: 700; color: #111; }
+  .stat-lbl { font-size: 11px; color: #AAA; margin-top: 1px; }
+  .profile-bio { font-size: 13px; color: #555; line-height: 1.5; margin-top: 12px; }
+  .tags-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 20px; }
+  .tag {
+    background: #F5F3F0; border-radius: 20px;
+    padding: 5px 13px; font-size: 12px; color: #555; font-weight: 500;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .tag:hover { background: #EAE8E4; }
+  .profile-tabs { display: flex; border-bottom: 1px solid #F0F0F0; padding: 0 20px; }
+  .profile-tab {
+    padding: 10px 16px; font-size: 13px; font-weight: 500;
+    color: #CCC; cursor: pointer; border: none; background: none;
+    border-bottom: 2px solid transparent; transition: color 0.15s;
+  }
+  .profile-tab.active { color: #111; border-bottom: 2px solid #111; }
+  .posts-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; }
+  .grid-cell {
+    aspect-ratio: 1; background: #EAE7E2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; cursor: pointer; transition: opacity 0.15s;
+  }
+  .grid-cell:hover { opacity: 0.85; }
+
+  /* ── SEARCH ── */
+  .search-bar-wrap { display: flex; align-items: center; gap: 10px; padding: 10px 20px; }
+  .search-input {
+    flex: 1; height: 40px; background: #F5F5F5;
+    border-radius: 12px; display: flex; align-items: center;
+    gap: 8px; padding: 0 14px; cursor: text;
+  }
+  .search-ph { font-size: 14px; color: #BBB; }
+  .cancel-lnk { font-size: 14px; color: #111; font-weight: 500; cursor: pointer; }
+  .cancel-lnk:hover { opacity: 0.7; }
+  .filter-row { display: flex; gap: 8px; padding: 0 20px 12px; overflow: hidden; }
+  .chip {
+    background: #F5F3F0; border-radius: 20px; padding: 5px 14px;
+    font-size: 12px; color: #555; font-weight: 500;
+    cursor: pointer; white-space: nowrap; border: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .chip.active { background: #111; color: #fff; }
+  .chip:hover:not(.active) { background: #EAE8E4; }
+  .section-head { font-size: 14px; font-weight: 700; color: #111; padding: 4px 20px 8px; }
+  .search-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 20px 12px; }
+  .search-cell {
+    aspect-ratio: 1; border-radius: 12px; background: #EAE7E2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; cursor: pointer; transition: opacity 0.15s;
+  }
+  .search-cell:hover { opacity: 0.85; }
+
+  /* ── MENU ── */
+  .menu-user {
+    display: flex; align-items: center; gap: 14px;
+    padding: 20px; border-bottom: 1px solid #F0F0F0;
+  }
+  .menu-avatar {
+    width: 54px; height: 54px; border-radius: 50%;
+    background: #D4CFC9; display: flex; align-items: center;
+    justify-content: center; font-size: 26px;
+  }
+  .menu-user-name { font-size: 16px; font-weight: 700; color: #111; }
+  .menu-user-handle { font-size: 13px; color: #AAA; margin-top: 2px; }
+  .menu-item {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 20px; border-bottom: 1px solid #F5F5F5;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .menu-item:hover { background: #FAFAFA; }
+  .menu-item:active { background: #F0F0F0; }
+  .menu-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: #F5F3F0; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .menu-icon svg { width: 20px; height: 20px; }
+  .menu-item-label { font-size: 15px; font-weight: 500; color: #111; }
+  .menu-item-sub { font-size: 12px; color: #AAA; margin-top: 1px; }
+  .menu-arrow { margin-left: auto; font-size: 18px; color: #CCC; }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 14px; color: #888; font-weight: 500;
+    cursor: pointer; background: none; border: none;
+    padding: 4px 8px; border-radius: 8px; transition: background 0.15s;
+  }
+  .back-btn:hover { background: #F5F5F5; }
+</style>
+</head>
+<body>
+
+<div class="phone" id="app">
+
+  <!-- Status Bar (always visible) -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="dynamic-island"></div>
+    <div class="status-icons">
+      <div class="signal"><span></span><span></span><span></span></div>
+      <div class="battery"><div class="battery-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ══ HOME SCREEN ══ -->
+  <div class="screen active" id="screen-home">
+    <div class="top-nav">
+      <button class="icon-btn" onclick="goTo('menu')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="nav-title">Petma</div>
+      <button class="icon-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
+    </div>
+    <div class="scroll-area">
+      <div class="post">
+        <div class="post-header">
+          <div class="avatar">Y</div>
+          <div>
+            <div class="post-user-name">Yuna</div>
+            <div class="post-time">2 min ago</div>
+          </div>
+        </div>
+        <div class="post-caption">Sleep in Sunday is the best day of the week! #sunspot ☀️</div>
+        <div class="post-image" style="background: linear-gradient(135deg,#E8E4DE,#D4CEC7)"><span class="pet-emoji">🐕</span></div>
+        <div class="post-actions">
+          <button class="action-btn" onclick="toggleLike(this)">
+            <svg id="heart1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="action-count">142</span>
+          </button>
+          <button class="action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="action-count">28</span>
+          </button>
+          <button class="action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="post">
+        <div class="post-header">
+          <div class="avatar" style="background:#D4E8D4">S</div>
+          <div>
+            <div class="post-user-name">Sky</div>
+            <div class="post-time">15 min ago</div>
+          </div>
+        </div>
+        <div class="post-caption">Going soaring this Sunday! 🐦</div>
+        <div class="post-image" style="background: linear-gradient(135deg,#D4E8D4,#B8D4B8)"><span class="pet-emoji">🦜</span></div>
+        <div class="post-actions">
+          <button class="action-btn" onclick="toggleLike(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="action-count">87</span>
+          </button>
+          <button class="action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="action-count">11</span>
+          </button>
+          <button class="action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="post">
+        <div class="post-header">
+          <div class="avatar" style="background:#E8D4D4">T</div>
+          <div>
+            <div class="post-user-name">Thea</div>
+            <div class="post-time">1 hour ago</div>
+          </div>
+        </div>
+        <div class="post-caption">MFWI's Sunday night and I have to go back to work in the morning. 😿</div>
+        <div class="post-image" style="background: linear-gradient(135deg,#E8D4E8,#D4B8D4)"><span class="pet-emoji">🐱</span></div>
+        <div class="post-actions">
+          <button class="action-btn" onclick="toggleLike(this)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="action-count">203</span>
+          </button>
+          <button class="action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="action-count">54</span>
+          </button>
+          <button class="action-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <button class="fab" onclick="alert('Create new post!')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <div class="bottom-nav">
+      <button class="nav-tab active" onclick="goTo('home')">
+        <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#111"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        <span class="tab-label active">Home</span>
+      </button>
+      <button class="nav-tab" onclick="goTo('search')">
+        <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <span class="tab-label">Search</span>
+      </button>
+      <button class="nav-tab" onclick="goTo('profile')">
+        <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <span class="tab-label">Profile</span>
+      </button>
+      <button class="nav-tab" onclick="goTo('menu')">
+        <div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>
+        <span class="tab-label">Menu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ PROFILE SCREEN ══ -->
+  <div class="screen" id="screen-profile">
+    <div class="top-nav">
+      <div class="nav-title">Profile</div>
+      <button class="icon-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <div class="scroll-area">
+      <div class="profile-cover">
+        <div class="profile-avatar-wrap">🐾</div>
+        <button class="profile-edit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+      <div class="profile-info">
+        <div class="profile-name">First Last</div>
+        <div class="profile-loc">San Francisco · @firstlast</div>
+        <div class="profile-stats">
+          <div class="stat-item"><div class="stat-num">194</div><div class="stat-lbl">Following</div></div>
+          <div class="stat-item"><div class="stat-num">611</div><div class="stat-lbl">Followers</div></div>
+          <div class="stat-item"><div class="stat-num">48</div><div class="stat-lbl">Posts</div></div>
+        </div>
+        <div class="profile-bio">Pets should be able to customize their profile description to tell other pets about themselves.</div>
+      </div>
+      <div class="tags-row">
+        <div class="tag">friendly</div><div class="tag">exploring</div>
+        <div class="tag">eating</div><div class="tag">napping</div><div class="tag">fetch</div>
+      </div>
+      <div class="profile-tabs">
+        <button class="profile-tab active" onclick="switchTab(this)">My posts</button>
+        <button class="profile-tab" onclick="switchTab(this)">Likes</button>
+        <button class="profile-tab" onclick="switchTab(this)">Bookmarks</button>
+      </div>
+      <div class="posts-grid">
+        <div class="grid-cell">🐕</div><div class="grid-cell">🐱</div><div class="grid-cell">🐰</div>
+        <div class="grid-cell">🦜</div><div class="grid-cell">🐹</div><div class="grid-cell">🐾</div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-tab" onclick="goTo('home')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="tab-label">Home</span></button>
+      <button class="nav-tab" onclick="goTo('search')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><span class="tab-label">Search</span></button>
+      <button class="nav-tab active" onclick="goTo('profile')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#111"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div><span class="tab-label active">Profile</span></button>
+      <button class="nav-tab" onclick="goTo('menu')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div><span class="tab-label">Menu</span></button>
+    </div>
+  </div>
+
+  <!-- ══ SEARCH SCREEN ══ -->
+  <div class="screen" id="screen-search">
+    <div class="top-nav">
+      <div class="nav-title">Search</div>
+      <span class="cancel-lnk" onclick="goTo('home')">Cancel</span>
+    </div>
+    <div class="scroll-area">
+      <div class="search-bar-wrap">
+        <div class="search-input">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#AAA" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span class="search-ph">Search for tags and users</span>
+        </div>
+      </div>
+      <div class="filter-row">
+        <button class="chip active" onclick="toggleChip(this)">friendly</button>
+        <button class="chip" onclick="toggleChip(this)">exploring</button>
+        <button class="chip" onclick="toggleChip(this)">eating</button>
+        <button class="chip" onclick="toggleChip(this)">napping</button>
+        <button class="chip" onclick="toggleChip(this)">fetch</button>
+      </div>
+      <div class="section-head">Pets you follow</div>
+      <div class="search-grid">
+        <div class="search-cell">🐕</div><div class="search-cell">🐱</div>
+      </div>
+      <div class="section-head">Trending</div>
+      <div class="search-grid">
+        <div class="search-cell">🐰</div><div class="search-cell">🦜</div>
+      </div>
+      <div class="section-head">New</div>
+      <div class="search-grid">
+        <div class="search-cell">🐹</div><div class="search-cell">🐶</div>
+      </div>
+      <div class="section-head">Suggested for you</div>
+      <div class="search-grid">
+        <div class="search-cell">🐈</div><div class="search-cell">🐾</div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-tab" onclick="goTo('home')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="tab-label">Home</span></button>
+      <button class="nav-tab active" onclick="goTo('search')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#111"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></div><span class="tab-label active">Search</span></button>
+      <button class="nav-tab" onclick="goTo('profile')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="tab-label">Profile</span></button>
+      <button class="nav-tab" onclick="goTo('menu')"><div class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div><span class="tab-label">Menu</span></button>
+    </div>
+  </div>
+
+  <!-- ══ MENU SCREEN ══ -->
+  <div class="screen" id="screen-menu">
+    <div class="top-nav">
+      <button class="back-btn" onclick="goTo('home')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+    </div>
+    <div class="scroll-area">
+      <div class="menu-user">
+        <div class="menu-avatar">🐾</div>
+        <div>
+          <div class="menu-user-name">First Last</div>
+          <div class="menu-user-handle">@firstlast</div>
+        </div>
+      </div>
+      <div class="menu-item" onclick="goTo('home')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <div><div class="menu-item-label">Home</div><div class="menu-item-sub">Your feed</div></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item" onclick="goTo('profile')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div><div class="menu-item-label">Profile</div><div class="menu-item-sub">Your page</div></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item" onclick="alert('3 new notifications!')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div><div class="menu-item-label">Notifications</div><div class="menu-item-sub">3 new</div></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item" onclick="alert('Settings coming soon!')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <div><div class="menu-item-label">Settings</div><div class="menu-item-sub">App preferences</div></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item" onclick="goTo('search')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <div><div class="menu-item-label">Search</div><div class="menu-item-sub">Find pets & tags</div></div>
+        <div class="menu-arrow">›</div>
+      </div>
+      <div class="menu-item" onclick="alert('Messaging coming soon!')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div><div class="menu-item-label">Messaging</div><div class="menu-item-sub">Chat with friends</div></div>
+        <div class="menu-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function goTo(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + screenId).classList.add('active');
+  }
+
+  function toggleLike(btn) {
+    const svg = btn.querySelector('svg');
+    const count = btn.querySelector('.action-count');
+    const liked = svg.getAttribute('fill') === '#E24B4A';
+    svg.setAttribute('fill', liked ? 'none' : '#E24B4A');
+    svg.setAttribute('stroke', liked ? '#888' : '#E24B4A');
+    count.textContent = parseInt(count.textContent) + (liked ? -1 : 1);
+    btn.style.transform = 'scale(1.2)';
+    setTimeout(() => btn.style.transform = '', 150);
+  }
+
+  function toggleChip(chip) {
+    chip.classList.toggle('active');
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  }
+</script>
+</body>
+</html>
